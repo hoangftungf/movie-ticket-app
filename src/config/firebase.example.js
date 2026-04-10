@@ -1,18 +1,20 @@
+// Copy file nay thanh firebase.js va dien thong tin Firebase cua ban
+
 import { initializeApp } from "firebase/app";
 import { initializeAuth, getReactNativePersistence } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 
-// Firebase configuration
+// Firebase configuration - Thay the bang config cua ban
 const firebaseConfig = {
-  apiKey: "AIzaSyA57niX6P5KBGV0m4Pv8_T6SfpS6PTwAFM",
-  authDomain: "movie-ticket-app-8710a.firebaseapp.com",
-  projectId: "movie-ticket-app-8710a",
-  storageBucket: "movie-ticket-app-8710a.firebasestorage.app",
-  messagingSenderId: "312525278818",
-  appId: "1:312525278818:web:f98e02d2e41ad86e5c8b3b",
-  measurementId: "G-15XY4WX5N2"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+  measurementId: "YOUR_MEASUREMENT_ID"
 };
 
 // Initialize Firebase
