@@ -31,19 +31,22 @@ export const createTicket = async (ticketData) => {
 export const getTicketsByUser = async (userId) => {
   try {
     const ticketsRef = collection(db, 'tickets');
+    // Chi dung where, khong dung orderBy de tranh loi index
     const q = query(
       ticketsRef,
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', userId)
     );
     const snapshot = await getDocs(q);
     const tickets = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
+    // Sort trong JavaScript thay vi Firestore
+    tickets.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     return { success: true, data: tickets };
   } catch (error) {
-    return { success: false, error: error.message };
+    console.log('getTicketsByUser error:', error);
+    return { success: false, error: error.message, data: [] };
   }
 };
 
