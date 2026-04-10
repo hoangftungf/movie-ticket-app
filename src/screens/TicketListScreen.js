@@ -30,20 +30,36 @@ export default function TicketListScreen({ navigation }) {
 
   const loadTickets = async () => {
     setLoading(true);
-    const user = auth.currentUser;
 
-    let result;
-    if (user) {
-      // Lay tu Firebase neu da dang nhap
-      result = await getTicketsByUser(user.uid);
-    } else {
-      // Lay tu local storage neu dung demo mode
-      result = await getLocalTickets();
+    try {
+      let user = null;
+      try {
+        user = auth.currentUser;
+      } catch (e) {
+        console.log('Auth error, using local storage:', e);
+      }
+
+      let result;
+      if (user) {
+        // Lay tu Firebase neu da dang nhap
+        result = await getTicketsByUser(user.uid);
+      } else {
+        // Lay tu local storage neu dung demo mode
+        result = await getLocalTickets();
+      }
+
+      if (result && result.success) {
+        setTickets(result.data || []);
+      } else {
+        setTickets([]);
+      }
+    } catch (error) {
+      console.log('Load tickets error:', error);
+      // Fallback to local storage
+      const result = await getLocalTickets();
+      setTickets(result.data || []);
     }
 
-    if (result.success) {
-      setTickets(result.data);
-    }
     setLoading(false);
   };
 
@@ -63,9 +79,14 @@ export default function TicketListScreen({ navigation }) {
           text: 'Huy ve',
           style: 'destructive',
           onPress: async () => {
-            const user = auth.currentUser;
-            let result;
+            let user = null;
+            try {
+              user = auth.currentUser;
+            } catch (e) {
+              console.log('Auth error:', e);
+            }
 
+            let result;
             if (user) {
               result = await cancelTicket(ticketId);
             } else {

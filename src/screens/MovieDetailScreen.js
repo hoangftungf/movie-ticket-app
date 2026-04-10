@@ -61,60 +61,73 @@ export default function MovieDetailScreen({ route, navigation }) {
     }
 
     setLoading(true);
-    const user = auth.currentUser;
 
-    const ticketData = {
-      userId: user ? user.uid : 'demo_user',
-      userEmail: user ? user.email : 'demo@example.com',
-      movieId: movie.id,
-      movieTitle: movie.title,
-      moviePoster: movie.poster,
-      theaterId: selectedTheater.id,
-      theaterName: selectedTheater.name,
-      theaterAddress: selectedTheater.address,
-      showtimeId: selectedShowtime.id,
-      showtime: selectedShowtime.startTime,
-      seats: selectedSeats,
-      totalPrice: calculateTotal(),
-      showDate: new Date().toISOString().split('T')[0],
-    };
-
-    let result;
-    if (user) {
-      // Luu len Firebase neu da dang nhap
-      result = await createTicket(ticketData);
-    } else {
-      // Luu vao local storage neu dung demo mode
-      result = await saveLocalTicket(ticketData);
-    }
-
-    setLoading(false);
-
-    if (result.success) {
-      // Gui notification
+    try {
+      // Check user - co the loi khi truy cap auth
+      let user = null;
       try {
-        await sendImmediateNotification(
-          'Dat ve thanh cong!',
-          `Ban da dat ve xem phim "${movie.title}" luc ${selectedShowtime.startTime}`,
-          { ticketId: result.ticketId }
-        );
+        user = auth.currentUser;
       } catch (e) {
-        console.log('Notification error:', e);
+        console.log('Auth error, using demo mode:', e);
       }
 
-      // Hien thi toast thanh cong
-      showSuccess(`Dat ve thanh cong! ${movie.title} - ${selectedShowtime.startTime} - Ghe: ${selectedSeats.join(', ')}`);
+      const ticketData = {
+        userId: user ? user.uid : 'demo_user',
+        userEmail: user ? user.email : 'demo@example.com',
+        movieId: movie.id,
+        movieTitle: movie.title,
+        moviePoster: movie.poster,
+        theaterId: selectedTheater.id,
+        theaterName: selectedTheater.name,
+        theaterAddress: selectedTheater.address,
+        showtimeId: selectedShowtime.id,
+        showtime: selectedShowtime.startTime,
+        seats: selectedSeats,
+        totalPrice: calculateTotal(),
+        showDate: new Date().toISOString().split('T')[0],
+      };
 
-      // Reset selection
-      setSelectedSeats([]);
-      setSelectedShowtime(null);
+      let result;
+      if (user) {
+        // Luu len Firebase neu da dang nhap
+        result = await createTicket(ticketData);
+      } else {
+        // Luu vao local storage neu dung demo mode
+        result = await saveLocalTicket(ticketData);
+      }
 
-      // Chuyen den trang ve sau 2 giay
-      setTimeout(() => {
-        navigation.navigate('TicketList');
-      }, 2000);
-    } else {
-      showError(result.error || 'Khong the dat ve. Vui long thu lai!');
+      setLoading(false);
+
+      if (result && result.success) {
+        // Gui notification
+        try {
+          await sendImmediateNotification(
+            'Dat ve thanh cong!',
+            `Ban da dat ve xem phim "${movie.title}" luc ${selectedShowtime.startTime}`,
+            { ticketId: result.ticketId }
+          );
+        } catch (e) {
+          console.log('Notification error:', e);
+        }
+
+        // Hien thi toast thanh cong
+        showSuccess(`Dat ve thanh cong! ${movie.title} - ${selectedShowtime.startTime} - Ghe: ${selectedSeats.join(', ')}`);
+
+        // Reset selection
+        setSelectedSeats([]);
+        setSelectedShowtime(null);
+
+        // Chuyen den trang ve sau 2 giay
+        setTimeout(() => {
+          navigation.navigate('TicketList');
+        }, 2000);
+      } else {
+        showError(result?.error || 'Khong the dat ve. Vui long thu lai!');
+      }
+    } catch (error) {
+      setLoading(false);
+      console.log('Booking error:', error);
+      showError('Co loi xay ra: ' + error.message);
     }
   };
 
