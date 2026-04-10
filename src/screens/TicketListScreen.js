@@ -11,13 +11,16 @@ import {
   Alert
 } from 'react-native';
 import { getTicketsByUser, cancelTicket } from '../services/ticketService';
+import { getLocalTickets, cancelLocalTicket } from '../services/localTicketService';
 import { auth } from '../config/firebase';
 import { useFocusEffect } from '@react-navigation/native';
+import { useToast } from '../context/ToastContext';
 
 export default function TicketListScreen({ navigation }) {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   useFocusEffect(
     useCallback(() => {
@@ -26,14 +29,17 @@ export default function TicketListScreen({ navigation }) {
   );
 
   const loadTickets = async () => {
-    const user = auth.currentUser;
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-
     setLoading(true);
-    const result = await getTicketsByUser(user.uid);
+    const user = auth.currentUser;
+
+    let result;
+    if (user) {
+      // Lay tu Firebase neu da dang nhap
+      result = await getTicketsByUser(user.uid);
+    } else {
+      // Lay tu local storage neu dung demo mode
+      result = await getLocalTickets();
+    }
 
     if (result.success) {
       setTickets(result.data);
@@ -57,12 +63,20 @@ export default function TicketListScreen({ navigation }) {
           text: 'Huy ve',
           style: 'destructive',
           onPress: async () => {
-            const result = await cancelTicket(ticketId);
+            const user = auth.currentUser;
+            let result;
+
+            if (user) {
+              result = await cancelTicket(ticketId);
+            } else {
+              result = await cancelLocalTicket(ticketId);
+            }
+
             if (result.success) {
-              Alert.alert('Thanh cong', 'Da huy ve thanh cong!');
+              showSuccess('Da huy ve thanh cong!');
               loadTickets();
             } else {
-              Alert.alert('Loi', 'Khong the huy ve. Vui long thu lai!');
+              showError('Khong the huy ve. Vui long thu lai!');
             }
           }
         }

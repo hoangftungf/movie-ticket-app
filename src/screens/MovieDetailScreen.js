@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SAMPLE_THEATERS, SAMPLE_SHOWTIMES } from '../services/movieService';
 import { createTicket } from '../services/ticketService';
+import { saveLocalTicket } from '../services/localTicketService';
 import { scheduleShowtimeReminder, sendImmediateNotification } from '../services/notificationService';
 import { auth } from '../config/firebase';
 import { useToast } from '../context/ToastContext';
@@ -59,18 +60,12 @@ export default function MovieDetailScreen({ route, navigation }) {
       return;
     }
 
-    const user = auth.currentUser;
-    if (!user) {
-      showError('Vui long dang nhap de dat ve!');
-      navigation.navigate('Login');
-      return;
-    }
-
     setLoading(true);
+    const user = auth.currentUser;
 
     const ticketData = {
-      userId: user.uid,
-      userEmail: user.email,
+      userId: user ? user.uid : 'demo_user',
+      userEmail: user ? user.email : 'demo@example.com',
       movieId: movie.id,
       movieTitle: movie.title,
       moviePoster: movie.poster,
@@ -81,14 +76,22 @@ export default function MovieDetailScreen({ route, navigation }) {
       showtime: selectedShowtime.startTime,
       seats: selectedSeats,
       totalPrice: calculateTotal(),
-      showDate: new Date().toISOString().split('T')[0], // Hom nay
+      showDate: new Date().toISOString().split('T')[0],
     };
 
-    const result = await createTicket(ticketData);
+    let result;
+    if (user) {
+      // Luu len Firebase neu da dang nhap
+      result = await createTicket(ticketData);
+    } else {
+      // Luu vao local storage neu dung demo mode
+      result = await saveLocalTicket(ticketData);
+    }
+
     setLoading(false);
 
     if (result.success) {
-      // Gui notification nhac gio chieu
+      // Gui notification
       try {
         await sendImmediateNotification(
           'Dat ve thanh cong!',
