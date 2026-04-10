@@ -11,7 +11,7 @@ import MovieDetailScreen from './src/screens/MovieDetailScreen';
 import TicketListScreen from './src/screens/TicketListScreen';
 
 import { ToastProvider } from './src/context/ToastContext';
-import { subscribeToAuthChanges } from './src/services/authService';
+import { subscribeToAuthChanges, saveFcmToken } from './src/services/authService';
 import { registerForPushNotifications, addNotificationResponseListener } from './src/services/notificationService';
 
 const Stack = createNativeStackNavigator();
@@ -22,13 +22,23 @@ export default function App() {
 
   useEffect(() => {
     // Lang nghe trang thai dang nhap
-    const unsubscribe = subscribeToAuthChanges((user) => {
+    const unsubscribe = subscribeToAuthChanges(async (user) => {
       setUser(user);
       if (initializing) setInitializing(false);
-    });
 
-    // Dang ky push notification
-    registerForPushNotifications();
+      // Luu FCM token khi user dang nhap
+      if (user) {
+        try {
+          const token = await registerForPushNotifications();
+          if (token) {
+            await saveFcmToken(user.uid, token);
+            console.log('FCM token saved for user:', user.uid);
+          }
+        } catch (e) {
+          console.log('Error saving FCM token:', e);
+        }
+      }
+    });
 
     // Lang nghe khi user nhan notification
     const notificationSubscription = addNotificationResponseListener((response) => {

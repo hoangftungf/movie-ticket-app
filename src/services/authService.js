@@ -4,7 +4,7 @@ import {
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
 // Dang ky tai khoan moi
@@ -63,4 +63,26 @@ export const getUserData = async (uid) => {
 // Theo doi trang thai dang nhap
 export const subscribeToAuthChanges = (callback) => {
   return onAuthStateChanged(auth, callback);
+};
+
+// Luu FCM token vao user document
+export const saveFcmToken = async (userId, fcmToken) => {
+  try {
+    await updateDoc(doc(db, 'users', userId), {
+      fcmToken: fcmToken,
+      fcmTokenUpdatedAt: new Date().toISOString(),
+    });
+    return { success: true };
+  } catch (error) {
+    // Neu user doc chua ton tai, tao moi
+    try {
+      await setDoc(doc(db, 'users', userId), {
+        fcmToken: fcmToken,
+        fcmTokenUpdatedAt: new Date().toISOString(),
+      }, { merge: true });
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
 };
