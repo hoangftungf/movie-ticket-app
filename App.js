@@ -10,6 +10,7 @@ import MovieListScreen from './src/screens/MovieListScreen';
 import MovieDetailScreen from './src/screens/MovieDetailScreen';
 import TicketListScreen from './src/screens/TicketListScreen';
 
+import { ToastProvider } from './src/context/ToastContext';
 import { subscribeToAuthChanges } from './src/services/authService';
 import { registerForPushNotifications, addNotificationResponseListener } from './src/services/notificationService';
 
@@ -51,9 +52,10 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <StatusBar style="light" />
-      <Stack.Navigator
+    <ToastProvider>
+      <NavigationContainer>
+        <StatusBar style="light" />
+        <Stack.Navigator
         initialRouteName={user ? 'MovieList' : 'Login'}
         screenOptions={{
           headerStyle: {
@@ -104,7 +106,8 @@ export default function App() {
           component={TicketListScreen}
           options={{ headerShown: false }}
         />
-      </Stack.Navigator>
-    </NavigationContainer>
+        </Stack.Navigator>
+      </NavigationContainer>
+    </ToastProvider>
   );
 }

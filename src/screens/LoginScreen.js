@@ -9,18 +9,19 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Alert
 } from 'react-native';
 import { loginUser } from '../services/authService';
+import { useToast } from '../context/ToastContext';
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showSuccess, showError, showInfo } = useToast();
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Loi', 'Vui long nhap email va mat khau!');
+      showError('Vui long nhap email va mat khau!');
       return;
     }
 
@@ -29,21 +30,27 @@ export default function LoginScreen({ navigation }) {
     setLoading(false);
 
     if (result.success) {
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'MovieList' }],
-      });
+      showSuccess('Dang nhap thanh cong!');
+      setTimeout(() => {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'MovieList' }],
+        });
+      }, 500);
     } else {
-      Alert.alert('Loi dang nhap', result.error);
+      showError('Loi dang nhap: ' + result.error);
     }
   };
 
   // Demo login (khong can Firebase)
   const handleDemoLogin = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'MovieList' }],
-    });
+    showInfo('Dang vao che do Demo...');
+    setTimeout(() => {
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MovieList' }],
+      });
+    }, 500);
   };
 
   return (

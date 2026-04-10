@@ -13,6 +13,7 @@ import { SAMPLE_THEATERS, SAMPLE_SHOWTIMES } from '../services/movieService';
 import { createTicket } from '../services/ticketService';
 import { scheduleShowtimeReminder, sendImmediateNotification } from '../services/notificationService';
 import { auth } from '../config/firebase';
+import { useToast } from '../context/ToastContext';
 
 const SEATS_ROW = ['A', 'B', 'C', 'D', 'E'];
 const SEATS_COL = [1, 2, 3, 4, 5, 6];
@@ -25,6 +26,7 @@ export default function MovieDetailScreen({ route, navigation }) {
   const [loading, setLoading] = useState(false);
   const [theaters] = useState(SAMPLE_THEATERS);
   const [bookedSeats] = useState(['A1', 'A2', 'C3', 'D4']); // Ghe da dat (mock)
+  const { showSuccess, showError, showWarning } = useToast();
 
   const getShowtimesForTheater = (theaterId) => {
     return SAMPLE_SHOWTIMES.filter(
@@ -53,13 +55,13 @@ export default function MovieDetailScreen({ route, navigation }) {
 
   const handleBooking = async () => {
     if (!selectedTheater || !selectedShowtime || selectedSeats.length === 0) {
-      Alert.alert('Loi', 'Vui long chon rap, suat chieu va ghe!');
+      showWarning('Vui long chon rap, suat chieu va ghe!');
       return;
     }
 
     const user = auth.currentUser;
     if (!user) {
-      Alert.alert('Loi', 'Vui long dang nhap de dat ve!');
+      showError('Vui long dang nhap de dat ve!');
       navigation.navigate('Login');
       return;
     }
@@ -87,29 +89,29 @@ export default function MovieDetailScreen({ route, navigation }) {
 
     if (result.success) {
       // Gui notification nhac gio chieu
-      await sendImmediateNotification(
-        'Dat ve thanh cong!',
-        `Ban da dat ve xem phim "${movie.title}" luc ${selectedShowtime.startTime}`,
-        { ticketId: result.ticketId }
-      );
+      try {
+        await sendImmediateNotification(
+          'Dat ve thanh cong!',
+          `Ban da dat ve xem phim "${movie.title}" luc ${selectedShowtime.startTime}`,
+          { ticketId: result.ticketId }
+        );
+      } catch (e) {
+        console.log('Notification error:', e);
+      }
 
-      Alert.alert(
-        'Dat ve thanh cong!',
-        `Phim: ${movie.title}\nRap: ${selectedTheater.name}\nGio: ${selectedShowtime.startTime}\nGhe: ${selectedSeats.join(', ')}\nTong: ${formatCurrency(calculateTotal())}`,
-        [
-          {
-            text: 'Xem ve cua toi',
-            onPress: () => navigation.navigate('TicketList')
-          },
-          { text: 'OK' }
-        ]
-      );
+      // Hien thi toast thanh cong
+      showSuccess(`Dat ve thanh cong! ${movie.title} - ${selectedShowtime.startTime} - Ghe: ${selectedSeats.join(', ')}`);
 
       // Reset selection
       setSelectedSeats([]);
       setSelectedShowtime(null);
+
+      // Chuyen den trang ve sau 2 giay
+      setTimeout(() => {
+        navigation.navigate('TicketList');
+      }, 2000);
     } else {
-      Alert.alert('Loi', result.error || 'Khong the dat ve. Vui long thu lai!');
+      showError(result.error || 'Khong the dat ve. Vui long thu lai!');
     }
   };
 

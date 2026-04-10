@@ -9,9 +9,9 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Alert
 } from 'react-native';
 import { registerUser } from '../services/authService';
+import { useToast } from '../context/ToastContext';
 
 export default function RegisterScreen({ navigation }) {
   const [displayName, setDisplayName] = useState('');
@@ -19,20 +19,21 @@ export default function RegisterScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { showSuccess, showError } = useToast();
 
   const handleRegister = async () => {
     if (!displayName.trim() || !email.trim() || !password.trim()) {
-      Alert.alert('Loi', 'Vui long nhap day du thong tin!');
+      showError('Vui long nhap day du thong tin!');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Loi', 'Mat khau xac nhan khong khop!');
+      showError('Mat khau xac nhan khong khop!');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Loi', 'Mat khau phai co it nhat 6 ky tu!');
+      showError('Mat khau phai co it nhat 6 ky tu!');
       return;
     }
 
@@ -41,11 +42,12 @@ export default function RegisterScreen({ navigation }) {
     setLoading(false);
 
     if (result.success) {
-      Alert.alert('Thanh cong', 'Dang ky thanh cong!', [
-        { text: 'OK', onPress: () => navigation.navigate('MovieList') }
-      ]);
+      showSuccess('Dang ky thanh cong! Chao mung ban!');
+      setTimeout(() => {
+        navigation.navigate('MovieList');
+      }, 1000);
     } else {
-      Alert.alert('Loi', result.error);
+      showError('Loi: ' + result.error);
     }
   };
 
